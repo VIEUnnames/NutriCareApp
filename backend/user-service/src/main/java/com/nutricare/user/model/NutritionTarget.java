@@ -13,9 +13,11 @@ public class NutritionTarget {
     @Column(name = "nutrition_target_id")
     private Integer nutritionTargetId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "activity_level", nullable = false)
     private ActivityLevel activityLevel;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Goal goal;
 

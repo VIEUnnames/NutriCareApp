@@ -10,6 +10,7 @@ public class Account {
     @Column(name = "account_id", nullable = false)
     private Integer accountId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 

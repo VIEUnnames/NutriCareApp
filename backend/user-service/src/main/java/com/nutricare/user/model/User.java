@@ -17,9 +17,13 @@ public class User {
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
+    @Column(name = "hash_password", nullable = false)
+    private String hashPassword;
+
     @Column(nullable = false)
     private Boolean gender;
 
+    @Enumerated(EnumType.STRING)
     private UserType userType;
 
     @OneToOne
@@ -39,10 +43,11 @@ public class User {
     public User() {
     }
 
-    public User(Integer userId, String email, String fullName, Boolean gender, UserType userType) {
+    public User(Integer userId, String email, String fullName, String hashPassword, Boolean gender, UserType userType) {
         this.userId = userId;
         this.email = email;
         this.fullName = fullName;
+        this.hashPassword = hashPassword;
         this.gender = gender;
         this.userType = userType;
     }
@@ -69,6 +74,14 @@ public class User {
 
     public void setFullName(String fullName) {
         this.fullName = fullName;
+    }
+
+    public String getHashPassword() {
+        return hashPassword;
+    }
+
+    public void setHashPassword(String hashPassword) {
+        this.hashPassword = hashPassword;
     }
 
     public Boolean getGender() {
