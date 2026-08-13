@@ -12,8 +12,6 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.parser.Entity;
-
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
@@ -39,9 +37,9 @@ public class UserServiceImpl implements UserService {
 
         UserInfoResponseDTO userInfoResponseDTO = null;
         if (user != null) {
-            userInfoResponseDTO = new UserInfoResponseDTO(user.getFullName(), user.getAccount().getRole());
+            userInfoResponseDTO = new UserInfoResponseDTO(user.getUserId(), user.getFullName(), user.getAccount().getRole());
         } else {
-            userInfoResponseDTO = new UserInfoResponseDTO(null, admin.getAccount().getRole());
+            userInfoResponseDTO = new UserInfoResponseDTO(user.getUserId(), null, admin.getAccount().getRole());
         }
 
         return userInfoResponseDTO;

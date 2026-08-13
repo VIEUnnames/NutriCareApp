@@ -6,6 +6,7 @@ import com.nutricare.user.dto.RegisterRequestDTO;
 import com.nutricare.user.dto.UserInfoResponseDTO;
 import com.nutricare.user.model.User;
 import com.nutricare.user.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,13 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequestDTO,
-                                   BindingResult result) {
+                                   BindingResult result,
+                                   HttpSession session) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO("409", "User is authenticated"));
+        }
+
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
         }
@@ -37,12 +44,19 @@ public class UserController {
             return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
         }
 
+        session.setAttribute("userInfo", userInfoResponseDTO);
         return ResponseEntity.ok(userInfoResponseDTO);
     }
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequestDTO,
-                                      BindingResult result) {
+                                      BindingResult result,
+                                      HttpSession session) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user != null) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(new ErrorResponseDTO("409", "User is authenticated"));
+        }
+
         if (result.hasErrors()) {
             return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
         }
