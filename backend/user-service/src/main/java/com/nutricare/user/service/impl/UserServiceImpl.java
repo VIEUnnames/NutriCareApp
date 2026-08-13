@@ -1,10 +1,9 @@
 package com.nutricare.user.service.impl;
 
-import com.nutricare.user.dto.LoginRequestDTO;
-import com.nutricare.user.dto.RegisterRequestDTO;
-import com.nutricare.user.dto.UserInfoResponseDTO;
+import com.nutricare.user.dto.*;
 import com.nutricare.user.model.*;
 import com.nutricare.user.repository.AdminRepository;
+import com.nutricare.user.repository.HealthConditionRepository;
 import com.nutricare.user.repository.UserRepository;
 import com.nutricare.user.service.UserService;
 import com.nutricare.user.utils.SecurityConfig;
@@ -12,12 +11,16 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
     private AdminRepository adminRepository;
+    @Autowired
+    private HealthConditionRepository healthConditionRepository;
     @Autowired
     private SecurityConfig securityConfig;
 
@@ -72,5 +75,97 @@ public class UserServiceImpl implements UserService {
 
     private String hashingPassword(String rawPassword) {
         return securityConfig.passwordEncoder().encode(rawPassword);
+    }
+
+    @Override
+    public List<HealthConditionResponseDTO> getHealthConditionList(Integer userId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        return healthConditionRepository.findAllHealthConditionByUserId(userId);
+    }
+
+    @Override
+    public HealthConditionResponseDTO getHealthCondition(Integer userId, Integer healthConditionId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        return healthConditionRepository.findHealthConditionByHealthConditionIdAndUserId(healthConditionId, userId);
+    }
+
+    @Transactional
+    @Override
+    public void addHealthCondition(HealthConditionRequestDTO healthConditionRequestDTO, Integer userId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        HealthCondition existsHealCondition = healthConditionRepository.findByHealthConditionNameAndUser_UserId(healthConditionRequestDTO.getHealthConditionName(), userId);
+        if (existsHealCondition != null) {
+            throw new RuntimeException("Loại bệnh / dị ứng / món ăn kiêng này đã tồn tại");
+        }
+
+        HealthCondition healthCondition = new HealthCondition(
+                null,
+                healthConditionRequestDTO.getHealthConditionName(),
+                healthConditionRequestDTO.getConditionType(),
+                healthConditionRequestDTO.getSeverity(),
+                healthConditionRequestDTO.getHealthConditionDescription());
+        healthCondition.setUser(user);
+
+        healthConditionRepository.save(healthCondition);
+    }
+
+    @Transactional
+    @Override
+    public void updateHealthCondition(Integer userId, Integer healthConditionId, HealthConditionRequestDTO healthConditionRequestDTO) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        HealthCondition existsHealCondition = healthConditionRepository.findByHealthConditionNameAndUser_UserId(healthConditionRequestDTO.getHealthConditionName(), userId);
+        if (existsHealCondition != null) {
+            throw new RuntimeException("Loại bệnh / dị ứng / món ăn kiêng này đã tồn tại");
+        }
+
+        HealthCondition healthCondition = healthConditionRepository.findByHealthConditionIdAndUser_UserId(healthConditionId, userId);
+        if (healthCondition == null) {
+            throw new RuntimeException("Diều kiện sức khoẻ này không tồn tại");
+        }
+
+        if (healthConditionRequestDTO.getHealthConditionName() != null) {
+            healthCondition.setHealthConditionName(healthConditionRequestDTO.getHealthConditionName());
+        }
+        if (healthConditionRequestDTO.getConditionType() != null) {
+            healthCondition.setConditionType(healthConditionRequestDTO.getConditionType());
+        }
+        if (healthConditionRequestDTO.getSeverity() != null) {
+            healthCondition.setSeverity(healthConditionRequestDTO.getSeverity());
+        }
+        healthCondition.setHealthConditionDescription(healthConditionRequestDTO.getHealthConditionDescription());
+
+        healthConditionRepository.save(healthCondition);
+    }
+
+    @Transactional
+    @Override
+    public void deleteHealthCondition(Integer userId, Integer healthConditionId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        HealthCondition healthCondition = healthConditionRepository.findByHealthConditionIdAndUser_UserId(healthConditionId, userId);
+        if (healthCondition == null) {
+            throw new RuntimeException("Diều kiện sức khoẻ này không tồn tại");
+        }
+
+        healthConditionRepository.delete(healthCondition);
     }
 }

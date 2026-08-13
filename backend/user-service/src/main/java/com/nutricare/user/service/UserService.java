@@ -1,12 +1,22 @@
 package com.nutricare.user.service;
 
-import com.nutricare.user.dto.LoginRequestDTO;
-import com.nutricare.user.dto.RegisterRequestDTO;
-import com.nutricare.user.dto.UserInfoResponseDTO;
+import com.nutricare.user.dto.*;
 import jakarta.validation.Valid;
+
+import java.util.List;
 
 public interface UserService {
     UserInfoResponseDTO login(LoginRequestDTO loginRequestDTO);
 
     void register(RegisterRequestDTO registerRequestDTO);
+
+    List<HealthConditionResponseDTO> getHealthConditionList(Integer userId);
+
+    void addHealthCondition(HealthConditionRequestDTO healthConditionRequestDTO, Integer userId);
+
+    HealthConditionResponseDTO getHealthCondition(Integer userId, Integer healthConditionId);
+
+    void updateHealthCondition(Integer userId, Integer healthConditionId, HealthConditionRequestDTO healthConditionRequestDTO);
+
+    void deleteHealthCondition(Integer userId, Integer healthConditionId);
 }
