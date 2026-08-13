@@ -10,6 +10,17 @@ public class HealthCondition {
     @Column(name = "health_condition_id", nullable = false)
     private Integer healthConditionId;
 
+    @Column(name = "health_condition_name", nullable = false)
+    private String healthConditionName;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "condition_type", nullable = false)
+    private ConditionType conditionType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Severity severity;
+
     @Column(name = "health_condition_description", length = 200)
     private String healthConditionDescription;
 
@@ -20,8 +31,11 @@ public class HealthCondition {
     public HealthCondition() {
     }
 
-    public HealthCondition(Integer healthConditionId, String healthConditionDescription) {
+    public HealthCondition(Integer healthConditionId, String healthConditionName, ConditionType conditionType, Severity severity, String healthConditionDescription) {
         this.healthConditionId = healthConditionId;
+        this.healthConditionName = healthConditionName;
+        this.conditionType = conditionType;
+        this.severity = severity;
         this.healthConditionDescription = healthConditionDescription;
     }
 
@@ -31,6 +45,30 @@ public class HealthCondition {
 
     public void setHealthConditionId(Integer healthConditionId) {
         this.healthConditionId = healthConditionId;
+    }
+
+    public String getHealthConditionName() {
+        return healthConditionName;
+    }
+
+    public void setHealthConditionName(String healthConditionName) {
+        this.healthConditionName = healthConditionName;
+    }
+
+    public ConditionType getConditionType() {
+        return conditionType;
+    }
+
+    public void setConditionType(ConditionType conditionType) {
+        this.conditionType = conditionType;
+    }
+
+    public Severity getSeverity() {
+        return severity;
+    }
+
+    public void setSeverity(Severity severity) {
+        this.severity = severity;
     }
 
     public String getHealthConditionDescription() {
