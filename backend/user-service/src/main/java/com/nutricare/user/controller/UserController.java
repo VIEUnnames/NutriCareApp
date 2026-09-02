@@ -167,4 +167,113 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
+
+    @GetMapping("/bmi-records")
+    public ResponseEntity<?> getBmiRecord(HttpSession session) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        List<BMIResponseDTO> bmiRecordList = null;
+        try {
+            bmiRecordList = userService.getBMIRecordList(user.getUserId());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND).body(bmiRecordList);
+    }
+
+    @GetMapping("/bmi-record/{id}")
+    public ResponseEntity<?> getBmiRecord(@PathVariable("id") String rawId,
+                                          HttpSession session) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        Integer bmiRecordId = null;
+        BMIResponseDTO bmiResponseDTO = null;
+        try {
+            bmiRecordId = Integer.parseInt(rawId);
+            bmiResponseDTO = userService.getBMIRecord(user.getUserId(), bmiRecordId);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("401", "Bmi record id is not exists"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
+        }
+
+        if (bmiResponseDTO == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        return ResponseEntity.status(HttpStatus.FOUND).body(bmiResponseDTO);
+    }
+
+    @PostMapping("/bmi-record")
+    public ResponseEntity<?> addBmiRecord(HttpSession session,
+                                          @Valid @RequestBody BMIRequestDTO bmiRequestDTO,
+                                          BindingResult result) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        if (result.hasErrors()) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+        }
+
+        try {
+            userService.addBmiRecord(user.getUserId(), bmiRequestDTO);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
+    @PutMapping("/bmi-record/{id}")
+    public ResponseEntity<?> updateBmiRecord(HttpSession session,
+                                             @PathVariable("id") String id,
+                                             @Valid @RequestBody BMIRequestDTO bmiRequestDTO,
+                                             BindingResult result) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        Integer bmiRecordId = null;
+        try {
+            bmiRecordId = Integer.parseInt(id);
+            userService.updateBmiRecord(user.getUserId(), bmiRecordId, bmiRequestDTO);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("400", "BMI Record is invalid"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
+        }
+
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @DeleteMapping("/bmi-record/{id}")
+    public ResponseEntity<?> deleteBmiRecord(HttpSession session,
+                                             @PathVariable("id") String id) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        Integer bmiRecordId = null;
+        try {
+            bmiRecordId = Integer.parseInt(id);
+            userService.deleteBmiRecord(user.getUserId(), bmiRecordId);
+        } catch (NumberFormatException e) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("400", "BMI Record is invalid"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+
+        return ResponseEntity.noContent().build();
+    }
 }

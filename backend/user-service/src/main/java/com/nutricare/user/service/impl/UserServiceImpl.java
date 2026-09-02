@@ -3,6 +3,7 @@ package com.nutricare.user.service.impl;
 import com.nutricare.user.dto.*;
 import com.nutricare.user.model.*;
 import com.nutricare.user.repository.AdminRepository;
+import com.nutricare.user.repository.BMIRecordRepository;
 import com.nutricare.user.repository.HealthConditionRepository;
 import com.nutricare.user.repository.UserRepository;
 import com.nutricare.user.service.UserService;
@@ -21,6 +22,8 @@ public class UserServiceImpl implements UserService {
     private AdminRepository adminRepository;
     @Autowired
     private HealthConditionRepository healthConditionRepository;
+    @Autowired
+    private BMIRecordRepository bmiRecordRepository;
     @Autowired
     private SecurityConfig securityConfig;
 
@@ -167,5 +170,78 @@ public class UserServiceImpl implements UserService {
         }
 
         healthConditionRepository.delete(healthCondition);
+    }
+
+    @Override
+    public List<BMIResponseDTO> getBMIRecordList(Integer userId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User is not exists");
+        }
+
+        return bmiRecordRepository.findByUserId(userId);
+    }
+
+    @Override
+    public BMIResponseDTO getBMIRecord(Integer userId, Integer bmiRecordId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User is not exists");
+        }
+
+        return bmiRecordRepository.findByUserIdAndBmiRecordId(userId, bmiRecordId);
+    }
+
+    @Transactional
+    @Override
+    public void addBmiRecord(Integer userId, BMIRequestDTO bmiRequestDTO) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        BMIRecord bmiRecord = new BMIRecord(null,
+                bmiRequestDTO.getWeightCm(),
+                bmiRequestDTO.getHeightCm(),
+                null);
+
+        bmiRecord.setUser(user);
+
+        bmiRecordRepository.save(bmiRecord);
+    }
+
+    @Transactional
+    @Override
+    public void updateBmiRecord(Integer userId, Integer bmiRecordId, BMIRequestDTO bmiRequestDTO) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        BMIRecord bmiRecord = bmiRecordRepository.findByBmiRecordIdAndUser_UserId(bmiRecordId, userId);
+        if (bmiRecord == null) {
+            throw new RuntimeException("Bmi Record is not exists!");
+        }
+
+        if (bmiRequestDTO.getHeightCm() != null) bmiRecord.setHeightCm(bmiRequestDTO.getHeightCm());
+        if (bmiRequestDTO.getWeightCm() != null) bmiRecord.setWeightCm(bmiRequestDTO.getWeightCm());
+
+        bmiRecordRepository.save(bmiRecord);
+    }
+
+    @Transactional
+    @Override
+    public void deleteBmiRecord(Integer userId, Integer bmiRecordId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User not exists");
+        }
+
+        BMIRecord bmiRecord = bmiRecordRepository.findByBmiRecordIdAndUser_UserId(bmiRecordId, userId);
+        if (bmiRecord == null) {
+            throw new RuntimeException("Bmi Record is not exists!");
+        }
+
+        bmiRecordRepository.delete(bmiRecord);
     }
 }
