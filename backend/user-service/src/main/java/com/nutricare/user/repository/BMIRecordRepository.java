@@ -23,4 +23,6 @@ public interface BMIRecordRepository extends JpaRepository<BMIRecord, Integer> {
                                               @Param("bmiRecordId") Integer bmiRecordId);
 
     BMIRecord findByBmiRecordIdAndUser_UserId(Integer bmiRecordId, Integer userId);
+
+    BMIRecord findTopByUser_UserIdOrderByRecordAtDesc(Integer userId);
 }

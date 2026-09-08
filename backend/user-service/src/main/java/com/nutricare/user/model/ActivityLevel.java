@@ -1,5 +1,19 @@
 package com.nutricare.user.model;
 
 public enum ActivityLevel {
-    SEDENTARY, LIGHT, MODERATE, ACTIVE, VERY_ACTIVE
+    SEDENTARY(1.2),
+    LIGHT(1.375),
+    MODERATE(1.55),
+    ACTIVE(1.725),
+    VERY_ACTIVE(1.9);
+
+    private final double factor;
+
+    ActivityLevel(double factor) {
+        this.factor = factor;
+    }
+
+    public double getFactor() {
+        return factor;
+    }
 }

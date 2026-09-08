@@ -29,4 +29,8 @@ public interface UserService {
     void updateBmiRecord(Integer userId, Integer bmiRecordId, BMIRequestDTO bmiRequestDTO);
 
     void deleteBmiRecord(Integer userId, Integer bmiRecordId);
+
+    List<NutritionTargetResponseDTO> getNutritionTargetList(Integer userId);
+
+    void addNutritionTarget(Integer userId, NutritionTargetRequestDTO nutritionTargetRequestDTO);
 }

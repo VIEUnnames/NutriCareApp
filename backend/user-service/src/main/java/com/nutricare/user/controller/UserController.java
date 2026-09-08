@@ -276,4 +276,44 @@ public class UserController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/nutrition-targets")
+    public ResponseEntity<?> getNutritionTargetList(HttpSession session) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        List<NutritionTargetResponseDTO> nutritionTargetList = null;
+
+        try {
+            nutritionTargetList = userService.getNutritionTargetList(user.getUserId());
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
+        }
+        System.out.println(nutritionTargetList.size());
+        return ResponseEntity.status(HttpStatus.FOUND).body(nutritionTargetList);
+    }
+
+    @PostMapping("/nutrition-target")
+    public ResponseEntity<?> addNutritionTarget(HttpSession session,
+                                                @Valid @RequestBody NutritionTargetRequestDTO nutritionTargetRequestDTO,
+                                                BindingResult result) {
+        UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
+        }
+
+        if (result.hasErrors()) {
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+        }
+
+        try {
+            userService.addNutritionTarget(user.getUserId(), nutritionTargetRequestDTO);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
+        }
+
+        return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
 }

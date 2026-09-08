@@ -2,17 +2,19 @@ package com.nutricare.user.service.impl;
 
 import com.nutricare.user.dto.*;
 import com.nutricare.user.model.*;
-import com.nutricare.user.repository.AdminRepository;
-import com.nutricare.user.repository.BMIRecordRepository;
-import com.nutricare.user.repository.HealthConditionRepository;
-import com.nutricare.user.repository.UserRepository;
+import com.nutricare.user.repository.*;
 import com.nutricare.user.service.UserService;
 import com.nutricare.user.utils.SecurityConfig;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+
+import com.nutricare.user.utils.NutritionCalculator;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -24,6 +26,8 @@ public class UserServiceImpl implements UserService {
     private HealthConditionRepository healthConditionRepository;
     @Autowired
     private BMIRecordRepository bmiRecordRepository;
+    @Autowired
+    private NutritionTargetRepository nutritionTargetRepository;
     @Autowired
     private SecurityConfig securityConfig;
 
@@ -243,5 +247,58 @@ public class UserServiceImpl implements UserService {
         }
 
         bmiRecordRepository.delete(bmiRecord);
+    }
+
+    @Override
+    public List<NutritionTargetResponseDTO> getNutritionTargetList(Integer userId) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User is not exists");
+        }
+
+        return nutritionTargetRepository.findByUser_UserId(userId);
+    }
+
+    @Transactional
+    @Override
+    public void addNutritionTarget(Integer userId, NutritionTargetRequestDTO nutritionTargetRequestDTO) {
+        User user = userRepository.findByUserId(userId);
+        if (user == null) {
+            throw new RuntimeException("User is not exists");
+        }
+
+        BMIRecord bmiRecord = bmiRecordRepository.findTopByUser_UserIdOrderByRecordAtDesc(userId);
+
+        BigDecimal bmr = NutritionCalculator.calculateBmr(bmiRecord.getWeightCm(), bmiRecord.getHeightCm(), 24, true);
+        BigDecimal tdee = NutritionCalculator.calculateTdee(bmr, nutritionTargetRequestDTO.getActivityLevel());
+        BigDecimal calorieTarget = NutritionCalculator.calculateCalorieTarget(tdee, nutritionTargetRequestDTO.getGoal(), BigDecimal.valueOf(500));
+        BigDecimal protein = NutritionCalculator.calculateProtein(calorieTarget);
+        BigDecimal fat = NutritionCalculator.calculateFat(calorieTarget);
+        BigDecimal carb = NutritionCalculator.calculateCarbon(calorieTarget, protein, fat);
+        BigDecimal fiber = NutritionCalculator.calculateFiber(calorieTarget);
+        BigDecimal water = NutritionCalculator.calculateWater(true);
+        BigDecimal sodium = NutritionCalculator.calculateSodium(true);
+
+        NutritionTarget nutritionTarget = new NutritionTarget(
+                null,
+                nutritionTargetRequestDTO.getActivityLevel(),
+                nutritionTargetRequestDTO.getGoal(),
+                bmr,
+                tdee,
+                calorieTarget,
+                protein,
+                fat,
+                carb,
+                fiber,
+                water,
+                sodium,
+                LocalDate.now(),
+                LocalDate.now().plusMonths(nutritionTargetRequestDTO.getNumberOfActive()),
+                true);
+
+        nutritionTarget.setUser(user);
+        nutritionTarget.setBmiRecord(bmiRecord);
+
+        nutritionTargetRepository.save(nutritionTarget);
     }
 }
