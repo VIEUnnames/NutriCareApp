@@ -1,6 +1,7 @@
 package com.nutricare.user.controller;
 
 import com.nutricare.user.dto.*;
+import com.nutricare.user.exception.InvalidUserInputException;
 import com.nutricare.user.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -32,15 +33,10 @@ public class UserController {
         }
 
         if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+            throw new InvalidUserInputException(result.getFieldError().getDefaultMessage());
         }
 
-        UserInfoResponseDTO userInfoResponseDTO = null;
-        try {
-            userInfoResponseDTO = userService.login(loginRequestDTO);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        UserInfoResponseDTO userInfoResponseDTO = userService.login(loginRequestDTO);
 
         session.setAttribute("userInfo", userInfoResponseDTO);
         return ResponseEntity.ok(userInfoResponseDTO);
@@ -56,24 +52,16 @@ public class UserController {
         }
 
         if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+            throw new InvalidUserInputException(result.getFieldError().getDefaultMessage());
         }
 
-        try {
-            userService.register(registerRequestDTO);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
-
+        userService.register(registerRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/health-conditions")
     public ResponseEntity<?> getHealthConditionList(HttpSession session) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
         List<HealthConditionResponseDTO> healthConditionList = userService.getHealthConditionList(user.getUserId());
         return ResponseEntity.status(HttpStatus.FOUND).body(healthConditionList);
@@ -81,18 +69,8 @@ public class UserController {
 
     @GetMapping("/health-conditions/{id}")
     public ResponseEntity<?> getHealCondition(HttpSession session,
-                                              @PathVariable("id") String rawId) {
+                                              @PathVariable("id") Integer healthConditionId) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
-
-        Integer healthConditionId = null;
-        try {
-            healthConditionId = Integer.parseInt(rawId);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("401", "Health Condition is invalid"));
-        }
 
         HealthConditionResponseDTO healthConditionResponseDTO = userService.getHealthCondition(user.getUserId(), healthConditionId);
 
@@ -107,63 +85,33 @@ public class UserController {
                                                 BindingResult result,
                                                 HttpSession session) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
         if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+            throw new InvalidUserInputException(result.getFieldError().getDefaultMessage());
         }
 
-        try {
-            userService.addHealthCondition(healthConditionRequestDTO, user.getUserId());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
-
+        userService.addHealthCondition(healthConditionRequestDTO, user.getUserId());
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/health-conditions/{id}")
     public ResponseEntity<?> updateHealthCondition(HttpSession session,
-                                                   @PathVariable("id") String rawId,
+                                                   @PathVariable("id") Integer healthConditionId,
                                                    @Valid @RequestBody HealthConditionRequestDTO healthConditionRequestDTO,
                                                    BindingResult result) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        Integer healthConditionId = null;
-        try {
-            healthConditionId = Integer.parseInt(rawId);
-            userService.updateHealthCondition(user.getUserId(), healthConditionId, healthConditionRequestDTO);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("401", "Health Condition is invalid"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        userService.updateHealthCondition(user.getUserId(), healthConditionId, healthConditionRequestDTO);
 
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/health-condition/{id}")
     public ResponseEntity<?> deleteHealthCondition(HttpSession session,
-                                                   @PathVariable("id") String rawId) {
+                                                   @PathVariable("id") Integer healthConditionId) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        Integer healthConditionId = null;
-        try {
-            healthConditionId = Integer.parseInt(rawId);
-            userService.deleteHealthCondition(user.getUserId(), healthConditionId);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("401", "Health Condition is invalid"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        userService.deleteHealthCondition(user.getUserId(), healthConditionId);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
@@ -171,38 +119,18 @@ public class UserController {
     @GetMapping("/bmi-records")
     public ResponseEntity<?> getBmiRecord(HttpSession session) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        List<BMIResponseDTO> bmiRecordList = null;
-        try {
-            bmiRecordList = userService.getBMIRecordList(user.getUserId());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        List<BMIResponseDTO> bmiRecordList = userService.getBMIRecordList(user.getUserId());
 
         return ResponseEntity.status(HttpStatus.FOUND).body(bmiRecordList);
     }
 
     @GetMapping("/bmi-record/{id}")
-    public ResponseEntity<?> getBmiRecord(@PathVariable("id") String rawId,
+    public ResponseEntity<?> getBmiRecord(@PathVariable("id") Integer bmiRecordId,
                                           HttpSession session) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        Integer bmiRecordId = null;
-        BMIResponseDTO bmiResponseDTO = null;
-        try {
-            bmiRecordId = Integer.parseInt(rawId);
-            bmiResponseDTO = userService.getBMIRecord(user.getUserId(), bmiRecordId);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("401", "Bmi record id is not exists"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        BMIResponseDTO bmiResponseDTO = userService.getBMIRecord(user.getUserId(), bmiRecordId);;
 
         if (bmiResponseDTO == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -216,63 +144,34 @@ public class UserController {
                                           @Valid @RequestBody BMIRequestDTO bmiRequestDTO,
                                           BindingResult result) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
         if (result.hasErrors()) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+            throw new InvalidUserInputException(result.getFieldError().getDefaultMessage());
         }
 
-        try {
-            userService.addBmiRecord(user.getUserId(), bmiRequestDTO);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        userService.addBmiRecord(user.getUserId(), bmiRequestDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/bmi-record/{id}")
     public ResponseEntity<?> updateBmiRecord(HttpSession session,
-                                             @PathVariable("id") String id,
+                                             @PathVariable("id") Integer bmiRecordId,
                                              @Valid @RequestBody BMIRequestDTO bmiRequestDTO,
                                              BindingResult result) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        Integer bmiRecordId = null;
-        try {
-            bmiRecordId = Integer.parseInt(id);
-            userService.updateBmiRecord(user.getUserId(), bmiRecordId, bmiRequestDTO);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("400", "BMI Record is invalid"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        userService.updateBmiRecord(user.getUserId(), bmiRecordId, bmiRequestDTO);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @DeleteMapping("/bmi-record/{id}")
     public ResponseEntity<?> deleteBmiRecord(HttpSession session,
-                                             @PathVariable("id") String id) {
+                                             @PathVariable("id") Integer bmiRecordId) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        Integer bmiRecordId = null;
-        try {
-            bmiRecordId = Integer.parseInt(id);
-            userService.deleteBmiRecord(user.getUserId(), bmiRecordId);
-        } catch (NumberFormatException e) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("400", "BMI Record is invalid"));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+        userService.deleteBmiRecord(user.getUserId(), bmiRecordId);
 
         return ResponseEntity.noContent().build();
     }
@@ -280,18 +179,9 @@ public class UserController {
     @GetMapping("/nutrition-targets")
     public ResponseEntity<?> getNutritionTargetList(HttpSession session) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
-        List<NutritionTargetResponseDTO> nutritionTargetList = null;
+        List<NutritionTargetResponseDTO> nutritionTargetList = userService.getNutritionTargetList(user.getUserId());
 
-        try {
-            nutritionTargetList = userService.getNutritionTargetList(user.getUserId());
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
-        System.out.println(nutritionTargetList.size());
         return ResponseEntity.status(HttpStatus.FOUND).body(nutritionTargetList);
     }
 
@@ -300,19 +190,12 @@ public class UserController {
                                                 @Valid @RequestBody NutritionTargetRequestDTO nutritionTargetRequestDTO,
                                                 BindingResult result) {
         UserInfoResponseDTO user = (UserInfoResponseDTO) session.getAttribute("userInfo");
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorResponseDTO("403", "User is not exists"));
-        }
 
         if (result.hasErrors()) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(new ErrorResponseDTO("400", result.getFieldError().getDefaultMessage()));
+            throw new InvalidUserInputException(result.getFieldError().getDefaultMessage());
         }
 
-        try {
-            userService.addNutritionTarget(user.getUserId(), nutritionTargetRequestDTO);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(new ErrorResponseDTO("400", e.getMessage()));
-        }
+        userService.addNutritionTarget(user.getUserId(), nutritionTargetRequestDTO);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }

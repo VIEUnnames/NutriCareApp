@@ -3,7 +3,7 @@ package com.nutricare.user.dto;
 import jakarta.validation.constraints.NotBlank;
 
 public class LoginRequestDTO {
-    @NotBlank(message = "Trường này không được để trống")
+    @NotBlank(message = "Email không được để trống")
     private String emailOrUsername;
 
     @NotBlank(message = "Mật khẩu không được để trống")

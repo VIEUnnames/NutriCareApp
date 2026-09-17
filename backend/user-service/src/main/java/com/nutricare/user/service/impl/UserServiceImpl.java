@@ -1,6 +1,10 @@
 package com.nutricare.user.service.impl;
 
 import com.nutricare.user.dto.*;
+import com.nutricare.user.exception.DuplicateResourceException;
+import com.nutricare.user.exception.InvalidCredentialsException;
+import com.nutricare.user.exception.ResourceNotFoundException;
+import com.nutricare.user.exception.UserNotFoundException;
 import com.nutricare.user.model.*;
 import com.nutricare.user.repository.*;
 import com.nutricare.user.service.UserService;
@@ -15,6 +19,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.nutricare.user.utils.NutritionCalculator;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -36,13 +41,13 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(loginRequestDTO.getEmailOrUsername());
         Admin admin = adminRepository.findByUsername(loginRequestDTO.getEmailOrUsername());
         if (user == null && admin == null) {
-            throw new RuntimeException("Tài khoản hoặc mật khâu không chính xác");
+            throw new InvalidCredentialsException("Tài khoản hoặc mật khâu không chính xác");
         }
 
         String hashPassword = (user != null) ? user.getHashPassword() : admin.getHashPassword();
         Boolean isPasswordMatch = validatePassword(loginRequestDTO.getPassword(), hashPassword);
         if (!isPasswordMatch) {
-            throw new RuntimeException("Tài khoản hoặc mật khẩu không chính xác");
+            throw new InvalidCredentialsException("Tài khoản hoặc mật khâu không chính xác");
         }
 
         UserInfoResponseDTO userInfoResponseDTO = null;
@@ -64,7 +69,7 @@ public class UserServiceImpl implements UserService {
     public void register(RegisterRequestDTO registerRequestDTO) {
         User existsUser = userRepository.findByEmail(registerRequestDTO.getEmail());
         if (existsUser != null) {
-            throw new RuntimeException("Email này đã tồn tại");
+            throw new DuplicateResourceException("Email này đã tồn tại");
         }
 
         Account account = new Account(null, Role.USER, false);
@@ -88,7 +93,7 @@ public class UserServiceImpl implements UserService {
     public List<HealthConditionResponseDTO> getHealthConditionList(Integer userId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         return healthConditionRepository.findAllHealthConditionByUserId(userId);
@@ -98,7 +103,7 @@ public class UserServiceImpl implements UserService {
     public HealthConditionResponseDTO getHealthCondition(Integer userId, Integer healthConditionId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         return healthConditionRepository.findHealthConditionByHealthConditionIdAndUserId(healthConditionId, userId);
@@ -109,12 +114,12 @@ public class UserServiceImpl implements UserService {
     public void addHealthCondition(HealthConditionRequestDTO healthConditionRequestDTO, Integer userId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         HealthCondition existsHealCondition = healthConditionRepository.findByHealthConditionNameAndUser_UserId(healthConditionRequestDTO.getHealthConditionName(), userId);
         if (existsHealCondition != null) {
-            throw new RuntimeException("Loại bệnh / dị ứng / món ăn kiêng này đã tồn tại");
+            throw new DuplicateResourceException("Loại bệnh / dị ứng / món ăn kiêng này đã tồn tại");
         }
 
         HealthCondition healthCondition = new HealthCondition(
@@ -133,17 +138,17 @@ public class UserServiceImpl implements UserService {
     public void updateHealthCondition(Integer userId, Integer healthConditionId, HealthConditionRequestDTO healthConditionRequestDTO) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         HealthCondition existsHealCondition = healthConditionRepository.findByHealthConditionNameAndUser_UserId(healthConditionRequestDTO.getHealthConditionName(), userId);
         if (existsHealCondition != null) {
-            throw new RuntimeException("Loại bệnh / dị ứng / món ăn kiêng này đã tồn tại");
+            throw new DuplicateResourceException("Loại bệnh / dị ứng / món ăn kiêng này đã tồn tại");
         }
 
         HealthCondition healthCondition = healthConditionRepository.findByHealthConditionIdAndUser_UserId(healthConditionId, userId);
         if (healthCondition == null) {
-            throw new RuntimeException("Diều kiện sức khoẻ này không tồn tại");
+            throw new ResourceNotFoundException("Diều kiện sức khoẻ này không tồn tại");
         }
 
         if (healthConditionRequestDTO.getHealthConditionName() != null) {
@@ -165,12 +170,12 @@ public class UserServiceImpl implements UserService {
     public void deleteHealthCondition(Integer userId, Integer healthConditionId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         HealthCondition healthCondition = healthConditionRepository.findByHealthConditionIdAndUser_UserId(healthConditionId, userId);
         if (healthCondition == null) {
-            throw new RuntimeException("Diều kiện sức khoẻ này không tồn tại");
+            throw new ResourceNotFoundException("Diều kiện sức khoẻ này không tồn tại");
         }
 
         healthConditionRepository.delete(healthCondition);
@@ -180,7 +185,7 @@ public class UserServiceImpl implements UserService {
     public List<BMIResponseDTO> getBMIRecordList(Integer userId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User is not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         return bmiRecordRepository.findByUserId(userId);
@@ -190,7 +195,7 @@ public class UserServiceImpl implements UserService {
     public BMIResponseDTO getBMIRecord(Integer userId, Integer bmiRecordId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User is not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         return bmiRecordRepository.findByUserIdAndBmiRecordId(userId, bmiRecordId);
@@ -201,7 +206,7 @@ public class UserServiceImpl implements UserService {
     public void addBmiRecord(Integer userId, BMIRequestDTO bmiRequestDTO) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         BMIRecord bmiRecord = new BMIRecord(null,
@@ -219,12 +224,12 @@ public class UserServiceImpl implements UserService {
     public void updateBmiRecord(Integer userId, Integer bmiRecordId, BMIRequestDTO bmiRequestDTO) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         BMIRecord bmiRecord = bmiRecordRepository.findByBmiRecordIdAndUser_UserId(bmiRecordId, userId);
         if (bmiRecord == null) {
-            throw new RuntimeException("Bmi Record is not exists!");
+            throw new ResourceNotFoundException("Bản ghi BMI này không tồn tại");
         }
 
         if (bmiRequestDTO.getHeightCm() != null) bmiRecord.setHeightCm(bmiRequestDTO.getHeightCm());
@@ -238,12 +243,12 @@ public class UserServiceImpl implements UserService {
     public void deleteBmiRecord(Integer userId, Integer bmiRecordId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         BMIRecord bmiRecord = bmiRecordRepository.findByBmiRecordIdAndUser_UserId(bmiRecordId, userId);
         if (bmiRecord == null) {
-            throw new RuntimeException("Bmi Record is not exists!");
+            throw new ResourceNotFoundException("Bản ghi BMI này không tồn tại");
         }
 
         bmiRecordRepository.delete(bmiRecord);
@@ -253,7 +258,7 @@ public class UserServiceImpl implements UserService {
     public List<NutritionTargetResponseDTO> getNutritionTargetList(Integer userId) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User is not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         return nutritionTargetRepository.findByUser_UserId(userId);
@@ -264,10 +269,13 @@ public class UserServiceImpl implements UserService {
     public void addNutritionTarget(Integer userId, NutritionTargetRequestDTO nutritionTargetRequestDTO) {
         User user = userRepository.findByUserId(userId);
         if (user == null) {
-            throw new RuntimeException("User is not exists");
+            throw new UserNotFoundException("User này không tồn tại");
         }
 
         BMIRecord bmiRecord = bmiRecordRepository.findTopByUser_UserIdOrderByRecordAtDesc(userId);
+        if (bmiRecord == null) {
+            throw new ResourceNotFoundException("Không có bản ghi BMI nào để thực hành tạo mục tiêu");
+        }
 
         BigDecimal bmr = NutritionCalculator.calculateBmr(bmiRecord.getWeightCm(), bmiRecord.getHeightCm(), 24, true);
         BigDecimal tdee = NutritionCalculator.calculateTdee(bmr, nutritionTargetRequestDTO.getActivityLevel());
