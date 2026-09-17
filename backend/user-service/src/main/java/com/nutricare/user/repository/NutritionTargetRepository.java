@@ -19,4 +19,7 @@ public interface NutritionTargetRepository extends JpaRepository<NutritionTarget
             "FROM NutritionTarget n " +
             "WHERE n.user.userId = :userId")
     List<NutritionTargetResponseDTO> findByUser_UserId(@Param("userId") Integer userId);
+
+    @Query("SELECT nt FROM NutritionTarget nt WHERE nt.user.userId = :userId AND nt.isActive = true")
+    NutritionTarget findActiveByUser_UserId(@Param("userId") Integer userId);
 }

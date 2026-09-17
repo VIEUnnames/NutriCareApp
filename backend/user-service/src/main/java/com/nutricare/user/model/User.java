@@ -2,6 +2,7 @@ package com.nutricare.user.model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Entity
@@ -23,6 +24,9 @@ public class User {
     @Column(nullable = false)
     private Boolean gender;
 
+    @Column(nullable = false)
+    private LocalDate dateOfBirth;
+
     @Enumerated(EnumType.STRING)
     private UserType userType;
 
@@ -43,12 +47,13 @@ public class User {
     public User() {
     }
 
-    public User(Integer userId, String email, String fullName, String hashPassword, Boolean gender, UserType userType) {
+    public User(Integer userId, String email, String fullName, String hashPassword, Boolean gender, LocalDate dateOfBirth, UserType userType) {
         this.userId = userId;
         this.email = email;
         this.fullName = fullName;
         this.hashPassword = hashPassword;
         this.gender = gender;
+        this.dateOfBirth = dateOfBirth;
         this.userType = userType;
     }
 
@@ -90,6 +95,14 @@ public class User {
 
     public void setGender(Boolean gender) {
         this.gender = gender;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 
     public UserType getUserType() {

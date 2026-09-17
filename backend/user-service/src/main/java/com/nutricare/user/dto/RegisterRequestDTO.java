@@ -1,6 +1,9 @@
 package com.nutricare.user.dto;
 
 import jakarta.validation.constraints.*;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 
 public class RegisterRequestDTO {
     @NotBlank(message = "Họ và tên không được để trống")
@@ -17,14 +20,19 @@ public class RegisterRequestDTO {
     @NotNull(message = "Vui lòng chọn giới tính của bạn")
     private Boolean gender;
 
+    @NotNull(message = "Ngày tháng năm sinh không được để trống")
+    @DateTimeFormat
+    private LocalDate dateOfBirth;
+
     public RegisterRequestDTO() {
     }
 
-    public RegisterRequestDTO(String fullName, String email, String password, Boolean gender) {
+    public RegisterRequestDTO(String fullName, String email, String password, Boolean gender, LocalDate dateOfBirth) {
         this.fullName = fullName;
         this.email = email;
         this.password = password;
         this.gender = gender;
+        this.dateOfBirth = dateOfBirth;
     }
 
     public String getFullName() {
@@ -57,5 +65,13 @@ public class RegisterRequestDTO {
 
     public void setGender(Boolean gender) {
         this.gender = gender;
+    }
+
+    public LocalDate getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(LocalDate dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
     }
 }

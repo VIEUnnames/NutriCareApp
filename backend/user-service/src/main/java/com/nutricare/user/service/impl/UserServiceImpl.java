@@ -11,11 +11,13 @@ import com.nutricare.user.service.UserService;
 import com.nutricare.user.utils.SecurityConfig;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cglib.core.Local;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
 
 import com.nutricare.user.utils.NutritionCalculator;
@@ -54,7 +56,7 @@ public class UserServiceImpl implements UserService {
         if (user != null) {
             userInfoResponseDTO = new UserInfoResponseDTO(user.getUserId(), user.getFullName(), user.getAccount().getRole());
         } else {
-            userInfoResponseDTO = new UserInfoResponseDTO(user.getUserId(), null, admin.getAccount().getRole());
+            userInfoResponseDTO = new UserInfoResponseDTO(admin.getAdminId(), null, admin.getAccount().getRole());
         }
 
         return userInfoResponseDTO;
@@ -78,6 +80,7 @@ public class UserServiceImpl implements UserService {
                 registerRequestDTO.getFullName(),
                 hashingPassword(registerRequestDTO.getPassword()),
                 registerRequestDTO.getGender(),
+                registerRequestDTO.getDateOfBirth(),
                 UserType.FREE);
         account.setUser(user);
         user.setAccount(account);
@@ -277,15 +280,22 @@ public class UserServiceImpl implements UserService {
             throw new ResourceNotFoundException("Không có bản ghi BMI nào để thực hành tạo mục tiêu");
         }
 
-        BigDecimal bmr = NutritionCalculator.calculateBmr(bmiRecord.getWeightCm(), bmiRecord.getHeightCm(), 24, true);
+        NutritionTarget oldNutritionTarget = nutritionTargetRepository.findActiveByUser_UserId(userId);
+        if(oldNutritionTarget != null) {
+            oldNutritionTarget.setActive(false);
+            nutritionTargetRepository.save(oldNutritionTarget);
+        }
+
+        Integer userAge = Period.between(LocalDate.now(), user.getDateOfBirth()).getYears();
+        BigDecimal bmr = NutritionCalculator.calculateBmr(bmiRecord.getWeightCm(), bmiRecord.getHeightCm(), userAge, user.getGender());
         BigDecimal tdee = NutritionCalculator.calculateTdee(bmr, nutritionTargetRequestDTO.getActivityLevel());
         BigDecimal calorieTarget = NutritionCalculator.calculateCalorieTarget(tdee, nutritionTargetRequestDTO.getGoal(), BigDecimal.valueOf(500));
         BigDecimal protein = NutritionCalculator.calculateProtein(calorieTarget);
         BigDecimal fat = NutritionCalculator.calculateFat(calorieTarget);
         BigDecimal carb = NutritionCalculator.calculateCarbon(calorieTarget, protein, fat);
         BigDecimal fiber = NutritionCalculator.calculateFiber(calorieTarget);
-        BigDecimal water = NutritionCalculator.calculateWater(true);
-        BigDecimal sodium = NutritionCalculator.calculateSodium(true);
+        BigDecimal water = NutritionCalculator.calculateWater(user.getGender());
+        BigDecimal sodium = NutritionCalculator.calculateSodium(user.getGender());
 
         NutritionTarget nutritionTarget = new NutritionTarget(
                 null,
