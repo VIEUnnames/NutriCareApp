@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "nutrition_targets")
+@Table(name = "nutrition_targets", schema = "[user]")
 public class NutritionTarget {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

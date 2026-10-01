@@ -3,7 +3,7 @@ package com.nutricare.user.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "admins")
+@Table(name = "admins", schema = "[user]")
 public class Admin {
     @Id
     @Column(name = "admin_id", nullable = false)

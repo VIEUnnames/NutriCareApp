@@ -3,7 +3,7 @@ package com.nutricare.user.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "accounts")
+@Table(name = "accounts", schema = "[user]")
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

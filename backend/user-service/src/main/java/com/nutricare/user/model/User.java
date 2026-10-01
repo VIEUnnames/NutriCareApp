@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "[user]")
 public class User {
     @Id
     @Column(name = "user_id")

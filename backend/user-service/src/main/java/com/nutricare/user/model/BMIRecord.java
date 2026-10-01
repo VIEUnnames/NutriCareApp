@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "bmi_records")
+@Table(name = "bmi_records", schema = "[user]")
 public class BMIRecord {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
